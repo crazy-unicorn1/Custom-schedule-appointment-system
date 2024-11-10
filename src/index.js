@@ -15,6 +15,10 @@ if (process.env.NODE_ENV !== 'production') {
 const app = express();
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the avsecretweapon Backend API");
+});
+
 app.use("/auth", authRouter);
 
 app.use(async (req, res, next) => {
