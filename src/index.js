@@ -8,7 +8,9 @@ import oauth2Client from "./utils/googleAuth.js";
 import { getStoredTokens } from "./utils/tokenStorage.js";
 import { verifyToken, refreshAccessToken } from "./services/tokenService.js";
 
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 const app = express();
 app.use(express.json());

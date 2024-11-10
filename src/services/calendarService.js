@@ -3,7 +3,9 @@ import oauth2Client from "../utils/googleAuth.js";
 import dotenv from "dotenv";
 import { calendarConfig } from "../../config/calendarConfig.js";
 
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 let syncToken = null;
 const calendarClient = google.calendar({ version: "v3", auth: oauth2Client });

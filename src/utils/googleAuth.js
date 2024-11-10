@@ -1,7 +1,9 @@
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
 
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 // Set up OAuth2 client using credentials from environment variables
 const oauth2Client = new google.auth.OAuth2(
