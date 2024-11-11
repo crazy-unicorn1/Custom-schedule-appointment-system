@@ -3,7 +3,7 @@ import oauth2Client from "../utils/googleAuth.js";
 import dotenv from "dotenv";
 import { calendarConfig, calendarMap } from "../../config/calendarConfig.js";
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   dotenv.config();
 }
 
@@ -22,7 +22,7 @@ export const callWatchCalendar = async () => {
         requestBody: {
           id: channelId,
           type: "web_hook",
-          address: process.env.WEBHOOK_URL,
+          address: "https://custom-schedule-appointment-system-crazyunicorns-projects.vercel.app/webhook/google-calendar",
           token: webhookToken,
         },
       });
@@ -138,7 +138,6 @@ export const syncCreatedEventToOtherCalendars = async (eventData, name) => {
   await Promise.all(syncPromises);
 };
 
-
 export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
   const targetCalendars = calendarMap[name];
 
@@ -174,7 +173,7 @@ export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
           for (const event of eventsToDelete) {
             calendarClient.events.delete({
               calendarId: targetCalendarId,
-              eventId: event.id
+              eventId: event.id,
             });
             console.log(
               `Deleted event with ID ${event.id} from ${targetCalendarName}'s calendar.`
@@ -198,7 +197,6 @@ export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
 
   await Promise.all(cancelPromises);
 };
-
 
 export const deleteAllEvents = async () => {
   try {
@@ -230,7 +228,9 @@ export const deleteAllEvents = async () => {
               calendarId: calendarId,
               eventId: event.id,
             });
-            console.log(`Deleted event: ${event.summary} from calendar: ${name}`);
+            console.log(
+              `Deleted event: ${event.summary} from calendar: ${name}`
+            );
           });
 
           await Promise.all(deleteEventPromises);
@@ -248,4 +248,3 @@ export const deleteAllEvents = async () => {
     throw error;
   }
 };
-
