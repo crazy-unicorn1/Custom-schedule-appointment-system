@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import {
   getUpdatedEventsByCalendarId,
   syncCreatedEventToOtherCalendars,
-  syncCancelledEventToOtherCalendars
+  syncCancelledEventToOtherCalendars,
 } from "../services/calendarService.js";
 import { calendarConfig } from "../../config/calendarConfig.js";
 
@@ -11,6 +11,13 @@ const webhookRouter = express.Router();
 webhookRouter.use(bodyParser.json());
 
 const processedMessages = {};
+
+const isCancelledByAttendee = (event) => {
+  return (
+    event.attendees &&
+    event.attendees.some((attendee) => attendee.responseStatus === "declined")
+  );
+};
 
 webhookRouter.post("/google-calendar", async (req, res) => {
   const changeType = req.headers["x-goog-resource-state"];
@@ -67,14 +74,13 @@ webhookRouter.post("/google-calendar", async (req, res) => {
 
       // Loop through each event and sync to other calendars if needed
       for (const event of eventsList) {
-        if (
+        if (event.status === "cancelled" || isCancelledByAttendee(event)) {
+          await syncCancelledEventToOtherCalendars(event.id, name);
+        } else if (
           event.status === "confirmed" &&
           !event.summary.startsWith("Reserved by")
         ) {
           await syncCreatedEventToOtherCalendars(event, name);
-        }
-        if (event.status === "cancelled") {
-          await syncCancelledEventToOtherCalendars(event.id, name);
         }
       }
 

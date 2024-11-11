@@ -159,33 +159,35 @@ export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
         // Fetch events from the target calendar
         const response = await calendarClient.events.list({
           calendarId: targetCalendarId,
-          q: eventId,  // Use search query to filter by eventId in description
+          q: eventId, // Use search query to filter by eventId in description
           maxResults: 10,
           singleEvents: true,
         });
 
-        // Filter for events that match the eventId in the description
-        const eventToDelete = response.data.items.find(
+        // Filter for all events that match the eventId in the description
+        const eventsToDelete = response.data.items.filter(
           (event) => event.description === eventId
         );
 
-        if (eventToDelete) {
-          // Cancel the event by deleting it
-          calendarClient.events.delete({
-            calendarId: targetCalendarId,
-            eventId: eventToDelete.id
-          });
-          console.log(
-            `Event with ID ${eventToDelete.id} deleted in ${targetCalendarName}'s calendar.`
-          );
+        if (eventsToDelete.length > 0) {
+          // Delete each matching event
+          for (const event of eventsToDelete) {
+            calendarClient.events.delete({
+              calendarId: targetCalendarId,
+              eventId: event.id
+            });
+            console.log(
+              `Deleted event with ID ${event.id} from ${targetCalendarName}'s calendar.`
+            );
+          }
         } else {
           console.log(
-            `Event with description ID ${eventId} not found in ${targetCalendarName}'s calendar.`
+            `No events with description ID ${eventId} found in ${targetCalendarName}'s calendar.`
           );
         }
       } catch (error) {
         console.error(
-          `Error cancelling event in ${targetCalendarName}'s calendar:`,
+          `Error cancelling events in ${targetCalendarName}'s calendar:`,
           error
         );
       }
@@ -196,6 +198,7 @@ export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
 
   await Promise.all(cancelPromises);
 };
+
 
 export const deleteAllEvents = async () => {
   try {
