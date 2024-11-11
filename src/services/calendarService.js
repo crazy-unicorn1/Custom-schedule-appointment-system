@@ -22,7 +22,7 @@ export const callWatchCalendar = async () => {
         requestBody: {
           id: channelId,
           type: "web_hook",
-          address: "process.env.WEBHOOK_URL",
+          address: process.env.WEBHOOK_URL,
           token: webhookToken,
         },
       });
