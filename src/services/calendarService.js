@@ -13,7 +13,7 @@ const calendarClient = google.calendar({ version: "v3", auth: oauth2Client });
 // Function to start watch for all calendars from config
 export const callWatchCalendar = async () => {
   try {
-    for (const calendar of calendarConfig) {
+    const watchPromises = calendarConfig.map(async (calendar) => {
       const { calendarId, webhookToken, name } = calendar;
       const channelId = `channel-${Date.now()}`;
 
@@ -29,7 +29,9 @@ export const callWatchCalendar = async () => {
 
       console.log(`Started watching calendar: ${name}`);
       // console.log("Response data:", response.data);
-    }
+    });
+
+    await Promise.all(watchPromises);
   } catch (error) {
     console.error("Error setting up watch:", error);
     throw error;
@@ -93,10 +95,7 @@ export const getUpdatedEventsByCalendarId = async (calendarId) => {
 };
 
 // Function to sync the event to other calendar
-export const syncCreatedEventToOtherCalendars = async (
-  eventData,
-  name
-) => {
+export const syncCreatedEventToOtherCalendars = async (eventData, name) => {
   const targetCalendars = calendarMap[name];
 
   if (!targetCalendars || targetCalendars.length === 0) {
@@ -104,7 +103,7 @@ export const syncCreatedEventToOtherCalendars = async (
     return;
   }
 
-  for (const targetCalendarName of targetCalendars) {
+  const syncPromises = targetCalendars.map(async (targetCalendarName) => {
     const targetCalendar = calendarConfig.find(
       (cal) => cal.name === targetCalendarName
     );
@@ -134,8 +133,11 @@ export const syncCreatedEventToOtherCalendars = async (
     } else {
       console.log(`Calendar not found for target: ${targetCalendarName}`);
     }
-  }
+  });
+
+  await Promise.all(syncPromises);
 };
+
 
 export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
   const targetCalendars = calendarMap[name];
@@ -145,7 +147,7 @@ export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
     return;
   }
 
-  for (const targetCalendarName of targetCalendars) {
+  const cancelPromises = targetCalendars.map(async (targetCalendarName) => {
     const targetCalendar = calendarConfig.find(
       (cal) => cal.name === targetCalendarName
     );
@@ -168,7 +170,7 @@ export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
         );
 
         if (eventToDelete) {
-          // Cancel the event by setting its status to "cancelled"
+          // Cancel the event by deleting it
           calendarClient.events.delete({
             calendarId: targetCalendarId,
             eventId: eventToDelete.id
@@ -190,15 +192,16 @@ export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
     } else {
       console.log(`Calendar not found for target: ${targetCalendarName}`);
     }
-  }
-};
+  });
 
+  await Promise.all(cancelPromises);
+};
 
 export const deleteAllEvents = async () => {
   try {
     console.log("Fetching all events to delete...");
 
-    for (const calendar of calendarConfig) {
+    const deletePromises = calendarConfig.map(async (calendar) => {
       const { calendarId, name } = calendar;
       console.log(`Deleting events from calendar: ${name}`);
 
@@ -219,20 +222,22 @@ export const deleteAllEvents = async () => {
         const events = response.data.items;
 
         if (events.length > 0) {
-          for (const event of events) {
+          const deleteEventPromises = events.map(async (event) => {
             calendarClient.events.delete({
               calendarId: calendarId,
               eventId: event.id,
             });
-            console.log(
-              `Deleted event: ${event.summary} from calendar: ${name}`
-            );
-          }
+            console.log(`Deleted event: ${event.summary} from calendar: ${name}`);
+          });
+
+          await Promise.all(deleteEventPromises);
         }
 
         pageToken = response.data.nextPageToken;
       } while (pageToken);
-    }
+    });
+
+    await Promise.all(deletePromises);
 
     console.log("All events deleted successfully from all calendars.");
   } catch (error) {
@@ -240,3 +245,4 @@ export const deleteAllEvents = async () => {
     throw error;
   }
 };
+
