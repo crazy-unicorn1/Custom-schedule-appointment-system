@@ -2,7 +2,8 @@ import express from "express";
 import bodyParser from "body-parser";
 import {
   getUpdatedEventsByCalendarId,
-  syncEventToOtherCalendars,
+  syncCreatedEventToOtherCalendars,
+  syncCancelledEventToOtherCalendars
 } from "../services/calendarService.js";
 import { calendarConfig } from "../../config/calendarConfig.js";
 
@@ -37,7 +38,7 @@ webhookRouter.post("/google-calendar", async (req, res) => {
 
   if (processedMessages[name].has(messageNumber)) {
     console.log(
-      `Duplicate message received for calendar ${name} (ID: ${calendarId}), messageNumber: ${messageNumber}`
+      `Duplicate message received for calendar ${name}, messageNumber: ${messageNumber}`
     );
     return res.status(200).send("Duplicate event ignored");
   }
@@ -68,9 +69,12 @@ webhookRouter.post("/google-calendar", async (req, res) => {
       for (const event of eventsList) {
         if (
           event.status === "confirmed" &&
-          event.description !== "This time slot is occupied."
+          !event.summary.startsWith("Reserved by")
         ) {
-          await syncEventToOtherCalendars(event, name, calendarId);
+          await syncCreatedEventToOtherCalendars(event, name);
+        }
+        if (event.status === "cancelled") {
+          await syncCancelledEventToOtherCalendars(event.id, name);
         }
       }
 

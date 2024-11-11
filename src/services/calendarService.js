@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import oauth2Client from "../utils/googleAuth.js";
 import dotenv from "dotenv";
-import { calendarConfig } from "../../config/calendarConfig.js";
+import { calendarConfig, calendarMap } from "../../config/calendarConfig.js";
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -93,21 +93,10 @@ export const getUpdatedEventsByCalendarId = async (calendarId) => {
 };
 
 // Function to sync the event to other calendar
-export const syncEventToOtherCalendars = async (
+export const syncCreatedEventToOtherCalendars = async (
   eventData,
-  name,
-  calendarId
+  name
 ) => {
-  const calendarMap = {
-    person1: ["team1", "both_teams"],
-    person2: ["team1", "both_teams"],
-    person3: ["team2", "both_teams"],
-    person4: ["team2", "both_teams"],
-    team1: ["person1", "person2", "both_teams"],
-    team2: ["person3", "person4", "both_teams"],
-    both_teams: ["person1", "person2", "person3", "person4", "team1", "team2"],
-  };
-
   const targetCalendars = calendarMap[name];
 
   if (!targetCalendars || targetCalendars.length === 0) {
@@ -127,7 +116,7 @@ export const syncEventToOtherCalendars = async (
           calendarId: targetCalendarId,
           requestBody: {
             summary: `Reserved by ${name}`,
-            description: "This time slot is occupied.",
+            description: eventData.id,
             start: eventData.start,
             end: eventData.end,
           },
@@ -147,6 +136,63 @@ export const syncEventToOtherCalendars = async (
     }
   }
 };
+
+export const syncCancelledEventToOtherCalendars = async (eventId, name) => {
+  const targetCalendars = calendarMap[name];
+
+  if (!targetCalendars || targetCalendars.length === 0) {
+    console.log(`No calendars to cancel for ${name}`);
+    return;
+  }
+
+  for (const targetCalendarName of targetCalendars) {
+    const targetCalendar = calendarConfig.find(
+      (cal) => cal.name === targetCalendarName
+    );
+
+    if (targetCalendar) {
+      const targetCalendarId = targetCalendar.calendarId;
+
+      try {
+        // Fetch events from the target calendar
+        const response = await calendarClient.events.list({
+          calendarId: targetCalendarId,
+          q: eventId,  // Use search query to filter by eventId in description
+          maxResults: 10,
+          singleEvents: true,
+        });
+
+        // Filter for events that match the eventId in the description
+        const eventToDelete = response.data.items.find(
+          (event) => event.description === eventId
+        );
+
+        if (eventToDelete) {
+          // Cancel the event by setting its status to "cancelled"
+          calendarClient.events.delete({
+            calendarId: targetCalendarId,
+            eventId: eventToDelete.id
+          });
+          console.log(
+            `Event with ID ${eventToDelete.id} deleted in ${targetCalendarName}'s calendar.`
+          );
+        } else {
+          console.log(
+            `Event with description ID ${eventId} not found in ${targetCalendarName}'s calendar.`
+          );
+        }
+      } catch (error) {
+        console.error(
+          `Error cancelling event in ${targetCalendarName}'s calendar:`,
+          error
+        );
+      }
+    } else {
+      console.log(`Calendar not found for target: ${targetCalendarName}`);
+    }
+  }
+};
+
 
 export const deleteAllEvents = async () => {
   try {
