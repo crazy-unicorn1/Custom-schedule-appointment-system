@@ -22,7 +22,7 @@ export const callWatchCalendar = async () => {
         requestBody: {
           id: channelId,
           type: "web_hook",
-          address: "https://custom-schedule-appointment-system-crazyunicorns-projects.vercel.app/webhook/google-calendar",
+          address: "process.env.WEBHOOK_URL",
           token: webhookToken,
         },
       });

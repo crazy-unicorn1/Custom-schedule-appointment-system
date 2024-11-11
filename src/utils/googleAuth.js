@@ -9,7 +9,7 @@ if (process.env.NODE_ENV !== "production") {
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  "https://custom-schedule-appointment-system-crazyunicorns-projects.vercel.app/auth/callback"
+  process.env.GOOGLE_REDIRECT_URI
 );
 
 export default oauth2Client;
