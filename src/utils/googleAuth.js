@@ -5,20 +5,11 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
 
-const getRedirectUri = (host) => {
-  if (process.env.NODE_ENV === 'production') {
-    return `https://${host}/auth/callback`;
-  } else {
-    return process.env.GOOGLE_REDIRECT_URI;
-  }
-};
-
-const redirectUri = getRedirectUri(process.env.HOST || 'localhost');
-
+// Set up OAuth2 client using credentials from environment variables
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  redirectUri
+  process.env.GOOGLE_REDIRECT_URI
 );
 
 export default oauth2Client;

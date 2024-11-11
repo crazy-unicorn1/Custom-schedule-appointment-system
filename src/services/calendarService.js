@@ -10,29 +10,19 @@ if (process.env.NODE_ENV !== 'production') {
 let syncToken = null;
 const calendarClient = google.calendar({ version: "v3", auth: oauth2Client });
 
-// Function to determine the webhook URL dynamically based on the environment
-const getWebhookUrl = () => {
-  if (process.env.NODE_ENV === "production") {
-    return `https://${process.env.HOST}/webhook/google-calendar`;
-  } else {
-    return process.env.WEBHOOK_URL; // .env should have this for local dev
-  }
-};
-
 // Function to start watch for all calendars from config
 export const callWatchCalendar = async () => {
   try {
     const watchPromises = calendarConfig.map(async (calendar) => {
       const { calendarId, webhookToken, name } = calendar;
       const channelId = `channel-${Date.now()}`;
-      const webhookUrl = getWebhookUrl();
 
       const response = await calendarClient.events.watch({
         calendarId: calendarId,
         requestBody: {
           id: channelId,
           type: "web_hook",
-          address: webhookUrl,
+          address: process.env.WEBHOOK_URL,
           token: webhookToken,
         },
       });
