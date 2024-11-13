@@ -248,3 +248,4 @@ export const deleteAllEvents = async () => {
     throw error;
   }
 };
+ 
