@@ -10,7 +10,7 @@ import { calendarConfig } from "../../config/calendarConfig.js";
 const webhookRouter = express.Router();
 webhookRouter.use(bodyParser.json());
 
-const processedMessages = {};
+const lastMessageNumber = {};
 
 const isCancelledByAttendee = (event) => {
   return (
@@ -39,18 +39,18 @@ webhookRouter.post("/google-calendar", async (req, res) => {
 
   const { calendarId, name } = calendar;
 
-  if (!processedMessages[name]) {
-    processedMessages[name] = new Set();
+  if (!lastMessageNumber[name]) {
+    lastMessageNumber[name] = 0;
   }
 
-  if (processedMessages[name].has(messageNumber)) {
+  if (lastMessageNumber[name] >= messageNumber) {
     console.log(
       `Duplicate message received for calendar ${name}, messageNumber: ${messageNumber}`
     );
     return res.status(200).send("Duplicate event ignored");
   }
 
-  processedMessages[name].add(messageNumber);
+  lastMessageNumber[name] = messageNumber;
 
   try {
     if (changeType === "sync") {
@@ -94,11 +94,6 @@ webhookRouter.post("/google-calendar", async (req, res) => {
     console.error("Error processing calendar event:", error);
     res.status(500).send("Error processing event");
   }
-
-  // Clean up processed messages periodically if needed to prevent memory leaks
-  setTimeout(() => {
-    processedMessages[name].delete(messageNumber);
-  }, 5 * 60 * 1000);
 });
 
 export default webhookRouter;
