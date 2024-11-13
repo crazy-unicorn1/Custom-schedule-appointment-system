@@ -7,7 +7,7 @@ if (process.env.NODE_ENV !== "production") {
   dotenv.config();
 }
 
-let syncToken = null;
+const syncTokens = {};
 const calendarClient = google.calendar({ version: "v3", auth: oauth2Client });
 
 // Function to start watch for all calendars from config
@@ -51,23 +51,20 @@ export const getCalendarList = async () => {
 
 export const getUpdatedEventsByCalendarId = async (calendarId) => {
   try {
-    // console.log("Fetching event data...");
-
     const requestParams = {
       calendarId: calendarId,
       maxResults: 10,
       singleEvents: true,
     };
 
-    if (syncToken) {
-      requestParams.syncToken = syncToken;
+    if (syncTokens[calendarId]) {
+      requestParams.syncToken = syncTokens[calendarId];
     }
 
     let allEvents = [];
     let pageToken = null;
 
     do {
-      // console.log("pageToken", pageToken);
       if (pageToken) {
         requestParams.pageToken = pageToken;
       }
@@ -77,15 +74,17 @@ export const getUpdatedEventsByCalendarId = async (calendarId) => {
 
       pageToken = response.data.nextPageToken;
       if (!pageToken) {
-        syncToken = response.data.nextSyncToken;
+        syncTokens[calendarId] = response.data.nextSyncToken;
       }
     } while (pageToken);
 
     return allEvents;
   } catch (error) {
     if (error.code === 410) {
-      console.warn("Sync token expired. Performing full sync...");
-      syncToken = null;
+      console.warn(
+        `Sync token expired for calendarId ${calendarId}. Performing full sync...`
+      );
+      syncTokens[calendarId] = null;
       return await getUpdatedEventsByCalendarId(calendarId);
     } else {
       console.error("Error fetching changed event data:", error);
