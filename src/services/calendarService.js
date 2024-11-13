@@ -51,7 +51,7 @@ export const getCalendarList = async () => {
 
 export const getUpdatedEventsByCalendarId = async (calendarId) => {
   try {
-    console.log("Fetching event data...");
+    // console.log("Fetching event data...");
 
     const requestParams = {
       calendarId: calendarId,
@@ -67,7 +67,7 @@ export const getUpdatedEventsByCalendarId = async (calendarId) => {
     let pageToken = null;
 
     do {
-      console.log("pageToken", pageToken);
+      // console.log("pageToken", pageToken);
       if (pageToken) {
         requestParams.pageToken = pageToken;
       }

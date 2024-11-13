@@ -23,6 +23,11 @@ webhookRouter.post("/google-calendar", async (req, res) => {
   const changeType = req.headers["x-goog-resource-state"];
   const messageNumber = req.headers["x-goog-message-number"];
   const channelToken = req.headers["x-goog-channel-token"];
+  const expiration = req.headers["x-goog-channel-expiration"];
+
+  console.log(
+    `New notification: Change Type: ${changeType}, Message Number: ${messageNumber}, Channel Token: ${channelToken}, Expiration: ${expiration}`
+  );
 
   if (!channelToken) {
     console.error("Channel token missing in request headers.");
