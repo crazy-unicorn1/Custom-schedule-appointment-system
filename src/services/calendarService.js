@@ -57,6 +57,7 @@ export const getUpdatedEventsByCalendarId = async (calendarId) => {
       singleEvents: true,
     };
 
+    console.log("sync token: ", syncTokens[calendarId]);
     if (syncTokens[calendarId]) {
       requestParams.syncToken = syncTokens[calendarId];
     }
