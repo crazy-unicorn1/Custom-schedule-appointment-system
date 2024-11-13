@@ -2,12 +2,12 @@ import { google } from "googleapis";
 import oauth2Client from "../utils/googleAuth.js";
 import dotenv from "dotenv";
 import { calendarConfig, calendarMap } from "../../config/calendarConfig.js";
+import { getSyncToken, saveSyncToken  } from "./syncTokenService.js";
 
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();
 }
 
-let syncToken = null;
 const calendarClient = google.calendar({ version: "v3", auth: oauth2Client });
 
 // Function to start watch for all calendars from config
@@ -53,6 +53,7 @@ export const getUpdatedEventsByCalendarId = async (calendarId) => {
   try {
     // console.log("Fetching event data...");
 
+    let syncToken = await getSyncToken();
     const requestParams = {
       calendarId: calendarId,
       maxResults: 10,
@@ -77,7 +78,8 @@ export const getUpdatedEventsByCalendarId = async (calendarId) => {
 
       pageToken = response.data.nextPageToken;
       if (!pageToken) {
-        syncToken = response.data.nextSyncToken;
+        const newSyncToken = response.data.nextSyncToken;
+        await saveSyncToken(newSyncToken);
       }
     } while (pageToken);
 
@@ -85,7 +87,7 @@ export const getUpdatedEventsByCalendarId = async (calendarId) => {
   } catch (error) {
     if (error.code === 410) {
       console.warn("Sync token expired. Performing full sync...");
-      syncToken = null;
+      await saveSyncToken(null);
       return await getUpdatedEventsByCalendarId(calendarId);
     } else {
       console.error("Error fetching changed event data:", error);
