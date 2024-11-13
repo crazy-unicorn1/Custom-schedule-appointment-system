@@ -1,15 +1,13 @@
-// src/models/syncTokenModel.js
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const syncTokenSchema = new mongoose.Schema({
-  _id: {
-    type: String,
-    default: 'globalSyncToken', // Single record for global sync token
+const syncTokenSchema = new mongoose.Schema(
+  {
+    _id: { type: String, default: "globalSyncToken" },
+    syncToken: { type: String, required: true },
   },
-  syncToken: {
-    type: String,
-    required: false,
-  },
-});
+  { timestamps: true }
+);
 
-export default mongoose.model('SyncToken', syncTokenSchema);
+const SyncToken = mongoose.model("SyncToken", syncTokenSchema);
+
+export default SyncToken;
