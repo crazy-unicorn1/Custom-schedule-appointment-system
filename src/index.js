@@ -50,7 +50,7 @@ connectDB().then(() => {
   });
 
   app.use("/calendar", calendarRouter);
-  app.use("/webhook", webhookRouter);
+  // app.use("/webhook", webhookRouter);
 
   app.listen(3000, () => {
     console.log("Server started on http://localhost:3000");
